@@ -23,6 +23,7 @@
 
       // Variables
       var accel = 0;
+      var vel = 0;
       var shipX = canvas.width / 2;
       var shipY = canvas.height / 2;
       var rotation = 0;
@@ -38,13 +39,22 @@
       }
 
       // Add rotation
-      function drawShip(x, y, d) {
+      function drawShip(x, y, d, v) {
+        console.log("")
         ctx.save();
         ctx.translate(x, y + 16);
         ctx.rotate((d * Math.PI) / 180);
         ctx.translate(-x, -(y + 16));
 
         ctx.beginPath();
+        var nx = x + v * Math.sin((d * Math.PI) / 180);
+        var ny = y - v * Math.cos((d * Math.PI) / 180);
+        shipX = nx;
+        shipY = ny;
+        console.log("x: " + x + ", y: " + y + ", nx: " + nx + ", ny: " + ny)
+
+//         x' = x * cos(θ) - y * sin(θ)
+//         y' = x * sin(θ) + y * cos(θ) 
 
         ctx.moveTo(x, y);
         ctx.lineTo(x - 8, y + 32);
@@ -75,7 +85,7 @@
       // Add more key events
       document.addEventListener("keydown", (event) => { 
         switch (event.key) {
-          case "ArrowUp": accel = accel + 1;
+          case "ArrowUp": accel = accel + 0.05;
             break;
           case "ArrowRight": rotation = (rotation + 5) % 360;
             break;
@@ -86,13 +96,19 @@
 
       document.addEventListener("keyup", (event) => { 
         console.log(event.key);
+        switch (event.key) {
+          case "ArrowUp": accel = 0;
+        }
       });
 
       // Game Loop
       const interval = setInterval(() => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGame();
-        drawShip(shipX, shipY, rotation); 
+        var friction = 0.02;
+        vel = Math.max(vel + accel - friction, 0);
+        console.log("shipX: " + shipX + ", shipY: " + shipY + ", vel: " + vel + ", accel: " + accel)
+        drawShip(shipX, shipY, rotation, vel); 
       }, 10);
 
     });
