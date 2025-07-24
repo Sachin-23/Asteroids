@@ -27,8 +27,11 @@
       var shipX = canvas.width / 2;
       var shipY = canvas.height / 2;
       var rotation = 0;
+      var accelR = 0;
       var gameLoop = true;
       var starCount = 50;
+      var friction = 0; // 0.02;
+      var v = 0;
       const starsPos = [];
 
       // Game Screen
@@ -39,39 +42,43 @@
       }
 
       // Add rotation
-      function drawShip(x, y, d, v) {
-        console.log("")
+      function drawShip(x, y, d, accel) {
         ctx.save();
-        ctx.translate(x, y + 16);
+        ctx.translate(x, y);
         ctx.rotate((d * Math.PI) / 180);
-        ctx.translate(-x, -(y + 16));
+        ctx.translate(-x, -y);
 
         ctx.beginPath();
-        var nx = x + v * Math.sin((d * Math.PI) / 180);
-        var ny = y - v * Math.cos((d * Math.PI) / 180);
-        shipX = nx;
-        shipY = ny;
+
+        var nx = 0;
+        var ny = 0;
+
+        if (accel) {
+          accelR = d;
+        }
+
+        v = Math.max(v + accel - friction, 0);
+        v = Math.min(5, v);
+
+        nx = x + v * Math.sin((accelR * Math.PI) / 180);
+        ny = y - v * Math.cos((accelR * Math.PI) / 180);
+
+        shipX = (nx + canvas.width) % canvas.width;
+        shipY = (ny + canvas.height) % canvas.height;
+
         console.log("x: " + x + ", y: " + y + ", nx: " + nx + ", ny: " + ny)
 
-//         x' = x * cos(θ) - y * sin(θ)
-//         y' = x * sin(θ) + y * cos(θ) 
-
-        ctx.moveTo(x, y);
-        ctx.lineTo(x - 8, y + 32);
-        ctx.lineTo(x + 8, y + 32);
-        ctx.lineTo(x, y);
+        ctx.moveTo(x, y - 16);
+        ctx.lineTo(x - 8, y + 8);
+        ctx.lineTo(x + 8, y + 8);
+        ctx.lineTo(x, y - 16);
         ctx.strokeStyle = "white";
         ctx.lineWidth = 2;
-
         ctx.stroke(); 
         ctx.fillStyle = "black";
         ctx.fill();
-
         ctx.closePath();
-        //
-        // ctx.translate(x, y);
-        // ctx.rotate((-d * Math.PI) / 180);
-        // ctx.translate(-x, -y);
+
         ctx.restore();
       }
 
@@ -105,10 +112,7 @@
       const interval = setInterval(() => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawGame();
-        var friction = 0.02;
-        vel = Math.max(vel + accel - friction, 0);
-        console.log("shipX: " + shipX + ", shipY: " + shipY + ", vel: " + vel + ", accel: " + accel)
-        drawShip(shipX, shipY, rotation, vel); 
+        drawShip(shipX, shipY, rotation, accel); 
       }, 10);
 
     });
