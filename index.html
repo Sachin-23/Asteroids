@@ -6,78 +6,98 @@
     <title>Asteroids</title>
   </head>
   <style>
+    html, body {
+      margin: 20px;
+      width: 500px;
+    }
     #myCanvas {
       background-color: black; 
       <!-- width: 100vw; -->
       border: 2px solid red;
     }
   </style>
-  <body>
-    <script>
-      document.addEventListener("DOMContentLoaded", (event) => { 
-        const canvas = document.getElementById("myCanvas");
-        const ctx = canvas.getContext("2d");
+  <script>
+    document.addEventListener("DOMContentLoaded", (event) => { 
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
 
-        // Variables
-        var shipX = canvas.width / 2;
-        var shipY = canvas.height / 2;
-        var rotation = 0;
-        var gameLoop = true;
-        var starCount = 50;
-        const starsPos = [];
+      // Variables
+      var accel = 0;
+      var shipX = canvas.width / 2;
+      var shipY = canvas.height / 2;
+      var rotation = 0;
+      var gameLoop = true;
+      var starCount = 50;
+      const starsPos = [];
 
-        // Game Screen
-        for (var i = 0; i < starCount; ++i) {
-          x = Math.floor(Math.random() * canvas.width);
-          y = Math.floor(Math.random() * canvas.height); 
-          starsPos[i] = {x: x, y: y}
+      // Game Screen
+      for (var i = 0; i < starCount; ++i) {
+        x = Math.floor(Math.random() * canvas.width);
+        y = Math.floor(Math.random() * canvas.height); 
+        starsPos[i] = {x: x, y: y}
+      }
+
+      // Add rotation
+      function drawShip(x, y, d) {
+        ctx.save();
+        ctx.translate(x, y + 16);
+        ctx.rotate((d * Math.PI) / 180);
+        ctx.translate(-x, -(y + 16));
+
+        ctx.beginPath();
+
+        ctx.moveTo(x, y);
+        ctx.lineTo(x - 8, y + 32);
+        ctx.lineTo(x + 8, y + 32);
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = 2;
+
+        ctx.stroke(); 
+        ctx.fillStyle = "black";
+        ctx.fill();
+
+        ctx.closePath();
+        //
+        // ctx.translate(x, y);
+        // ctx.rotate((-d * Math.PI) / 180);
+        // ctx.translate(-x, -y);
+        ctx.restore();
+      }
+
+      function drawGame() {
+        for (const pos of starsPos) {
+          ctx.fillStyle = "white";
+          ctx.fillRect(pos.x, pos.y, 2, 2);
         }
+      }
 
-        function drawShip(x, y) {
-          ctx.beginPath();
-          ctx.rotate((rotation * Math.PI) / 180);
-
-          ctx.moveTo(x, y + 16);
-          ctx.lineTo(x - 8, y + 32);
-          ctx.lineTo(x + 8, y + 32);
-          ctx.lineTo(x, y + 16);
-          ctx.strokeStyle = "white";
-          ctx.lineWidth = 2;
-
-          ctx.stroke(); 
-          ctx.fillStyle = "black";
-          ctx.fill();
-
-          ctx.rotate((-rotation * Math.PI) / 180);
-
-          ctx.closePath();
+      // Add more key events
+      document.addEventListener("keydown", (event) => { 
+        switch (event.key) {
+          case "ArrowUp": accel = accel + 1;
+            break;
+          case "ArrowRight": rotation = (rotation + 5) % 360;
+            break;
+          case "ArrowLeft": rotation = (rotation - 5) % 360
+            break;
         }
-
-        function drawGame() {
-          for (const pos of starsPos) {
-            ctx.fillStyle = "white";
-            ctx.fillRect(pos.x, pos.y, 2, 2);
-          }
-        }
-
-        document.addEventListener("keydown", (event) => { 
-          console.log(event.key);
-          switch (event.key) {
-            case "ArrowUp": shipY = shipY - 1;
-              break;
-            case "ArrowRight": rotation = rotation + 1;
-              break;
-          }
-        });
-
-        const interval = setInterval(() => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          drawGame();
-          drawShip(shipX, shipY); 
-        }, 10);
-
       });
-    </script>
-    <canvas id="myCanvas" width="400" height="400"></canvas>
+
+      document.addEventListener("keyup", (event) => { 
+        console.log(event.key);
+      });
+
+      // Game Loop
+      const interval = setInterval(() => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawGame();
+        drawShip(shipX, shipY, rotation); 
+      }, 10);
+
+    });
+  </script>
+  <body>
+    <canvas id="myCanvas" width="800" height="800"></canvas>
   </body>
 </html>
