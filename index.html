@@ -16,107 +16,110 @@
       border: 2px solid red;
     }
   </style>
-  <script>
-    document.addEventListener("DOMContentLoaded", (event) => { 
-      const canvas = document.getElementById("myCanvas");
-      const ctx = canvas.getContext("2d");
-
-      // Variables
-      var accel = 0;
-      var vel = 0;
-      var shipX = canvas.width / 2;
-      var shipY = canvas.height / 2;
-      var rotation = 0;
-      var accelR = 0;
-      var gameLoop = true;
-      var starCount = 50;
-      var friction = 0; // 0.02;
-      var v = 0;
-      const starsPos = [];
-
-      // Game Screen
-      for (var i = 0; i < starCount; ++i) {
-        x = Math.floor(Math.random() * canvas.width);
-        y = Math.floor(Math.random() * canvas.height); 
-        starsPos[i] = {x: x, y: y}
-      }
-
-      // Add rotation
-      function drawShip(x, y, d, accel) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate((d * Math.PI) / 180);
-        ctx.translate(-x, -y);
-
-        ctx.beginPath();
-
-        var nx = 0;
-        var ny = 0;
-
-        if (accel) {
-          accelR = d;
-        }
-
-        v = Math.max(v + accel - friction, 0);
-        v = Math.min(5, v);
-
-        nx = x + v * Math.sin((accelR * Math.PI) / 180);
-        ny = y - v * Math.cos((accelR * Math.PI) / 180);
-
-        shipX = (nx + canvas.width) % canvas.width;
-        shipY = (ny + canvas.height) % canvas.height;
-
-        console.log("x: " + x + ", y: " + y + ", nx: " + nx + ", ny: " + ny)
-
-        ctx.moveTo(x, y - 16);
-        ctx.lineTo(x - 8, y + 8);
-        ctx.lineTo(x + 8, y + 8);
-        ctx.lineTo(x, y - 16);
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = 2;
-        ctx.stroke(); 
-        ctx.fillStyle = "black";
-        ctx.fill();
-        ctx.closePath();
-
-        ctx.restore();
-      }
-
-      function drawGame() {
-        for (const pos of starsPos) {
-          ctx.fillStyle = "white";
-          ctx.fillRect(pos.x, pos.y, 2, 2);
-        }
-      }
-
-      // Add more key events
-      document.addEventListener("keydown", (event) => { 
-        switch (event.key) {
-          case "ArrowUp": accel = accel + 0.05;
-            break;
-          case "ArrowRight": rotation = (rotation + 5) % 360;
-            break;
-          case "ArrowLeft": rotation = (rotation - 5) % 360
-            break;
-        }
-      });
-
-      document.addEventListener("keyup", (event) => { 
-        console.log(event.key);
-        switch (event.key) {
-          case "ArrowUp": accel = 0;
-        }
-      });
-
-      // Game Loop
-      const interval = setInterval(() => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawGame();
-        drawShip(shipX, shipY, rotation, accel); 
-      }, 10);
-
-    });
-  </script>
+  <script defer src="main.js"></script>
+  <!-- <script> -->
+  <!--   document.addEventListener("DOMContentLoaded", (event) => {  -->
+  <!--     const canvas = document.getElementById("myCanvas"); -->
+  <!--     const ctx = canvas.getContext("2d"); -->
+  <!---->
+  <!--     // Variables -->
+  <!--     var accel = 0; -->
+  <!--     var vel = 0; -->
+  <!--     var shipX = canvas.width / 2; -->
+  <!--     var shipY = canvas.height / 2; -->
+  <!--     var rotation = 0; -->
+  <!--     var accelR = 0; -->
+  <!--     var gameLoop = true; -->
+  <!--     var starCount = 50; -->
+  <!--     var friction = 0; // 0.02; -->
+  <!--     var v = 0; -->
+  <!--     const starsPos = []; -->
+  <!---->
+  <!--     // Game Screen -->
+  <!--     for (var i = 0; i < starCount; ++i) { -->
+  <!--       x = Math.floor(Math.random() * canvas.width); -->
+  <!--       y = Math.floor(Math.random() * canvas.height);  -->
+  <!--       starsPos[i] = {x: x, y: y} -->
+  <!--     } -->
+  <!---->
+  <!--     // velocity vectory -->
+  <!--     var velocity = {x: x, y: y} -->
+  <!---->
+  <!--     // Add rotation -->
+  <!--     function drawShip(x, y, d, accel) { -->
+  <!--       ctx.save(); -->
+  <!--       ctx.translate(x, y); -->
+  <!--       ctx.rotate((d * Math.PI) / 180); -->
+  <!--       ctx.translate(-x, -y); -->
+  <!---->
+  <!--       ctx.beginPath(); -->
+  <!---->
+  <!--       var nx = 0; -->
+  <!--       var ny = 0; -->
+  <!---->
+  <!--       accel = Math.min(1, accel); -->
+  <!--       console.log("accel", accel); -->
+  <!---->
+  <!--       accelR = d; -->
+  <!---->
+  <!--       v = Math.max(v + accel - friction, 0); -->
+  <!--       v = Math.min(5, v); -->
+  <!---->
+  <!--       nx = x + v * Math.sin((accelR * Math.PI) / 180); -->
+  <!--       ny = y - v * Math.cos((accelR * Math.PI) / 180); -->
+  <!---->
+  <!--       shipX = (nx + canvas.width) % canvas.width; -->
+  <!--       shipY = (ny + canvas.height) % canvas.height; -->
+  <!---->
+  <!--       ctx.moveTo(x, y - 16); -->
+  <!--       ctx.lineTo(x - 8, y + 8); -->
+  <!--       ctx.lineTo(x + 8, y + 8); -->
+  <!--       ctx.lineTo(x, y - 16); -->
+  <!--       ctx.strokeStyle = "white"; -->
+  <!--       ctx.lineWidth = 2; -->
+  <!--       ctx.stroke();  -->
+  <!--       ctx.fillStyle = "black"; -->
+  <!--       ctx.fill(); -->
+  <!--       ctx.closePath(); -->
+  <!---->
+  <!--       ctx.restore(); -->
+  <!--     } -->
+  <!---->
+  <!--     function drawGame() { -->
+  <!--       for (const pos of starsPos) { -->
+  <!--         ctx.fillStyle = "white"; -->
+  <!--         ctx.fillRect(pos.x, pos.y, 2, 2); -->
+  <!--       } -->
+  <!--     } -->
+  <!---->
+  <!--     // Add more key events -->
+  <!--     document.addEventListener("keydown", (event) => {  -->
+  <!--       switch (event.key) { -->
+  <!--         case "ArrowUp": accel = accel + 0.05; -->
+  <!--           break; -->
+  <!--         case "ArrowRight": rotation = (rotation + 5) % 360; -->
+  <!--           break; -->
+  <!--         case "ArrowLeft": rotation = (rotation - 5) % 360 -->
+  <!--           break; -->
+  <!--       } -->
+  <!--     }); -->
+  <!---->
+  <!--     document.addEventListener("keyup", (event) => {  -->
+  <!--       console.log(event.key); -->
+  <!--       switch (event.key) { -->
+  <!--         case "ArrowUp": accel = 0; -->
+  <!--       } -->
+  <!--     }); -->
+  <!---->
+  <!--     // Game Loop -->
+  <!--     const interval = setInterval(() => { -->
+  <!--       ctx.clearRect(0, 0, canvas.width, canvas.height); -->
+  <!--       drawGame(); -->
+  <!--       drawShip(shipX, shipY, rotation, accel);  -->
+  <!--     }, 10); -->
+  <!---->
+  <!--   }); -->
+  <!-- </script> -->
   <body>
     <canvas id="myCanvas" width="800" height="800"></canvas>
   </body>
