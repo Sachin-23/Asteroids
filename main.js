@@ -4,8 +4,11 @@ const ctx = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
 
+const maxVel = 8;
+
 // Refactor this
 const starsCount = 50;
+const asteroidsCount = 2;
 
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -34,10 +37,22 @@ class SpaceShip {
     this.pos = {x: x, y: y};
     this.rotation = rotation;
     this.accel = 0;   
+    this.a = {x: 0, y: 0};
   }
 
   setAccel(accel) {
     this.accel += accel;   
+
+    // Radians
+    this.a.x = Math.sin(this.rotation * Math.PI / 180);
+    this.a.y = Math.cos(this.rotation * Math.PI / 180);
+
+    // Update Velcoity
+    this.vel.x += (this.accel * this.a.x);
+    this.vel.y += (this.accel * this.a.y);
+
+    this.vel.x = Math.min(maxVel, this.vel.x);
+    this.vel.y = Math.min(maxVel, this.vel.y);
   }
 
   clearAccel() {
@@ -45,7 +60,13 @@ class SpaceShip {
   }
 
   setRotation(d) {
-    this.rotation = (this.rotation + d) % 360;
+    this.rotation = Math.abs((this.rotation + d + 360) % 360);
+  }
+
+  updatePosition() {
+    // Update Position
+    this.pos.x += this.vel.x; 
+    this.pos.y -= this.vel.y;
   }
 
   draw() {
@@ -72,16 +93,41 @@ class SpaceShip {
 
     ctx.restore();
   }
+
+  shoot() {
+    // TODO
+    // Shoot using the current rotation distance should be the width
+    // Create a new class for Bullets
+  }
 }
 
 class Asteroid {
   // TODO
+  constructor(x, y, rotation) {
+    this.x = x;  
+    this.y = y;  
+    this.rotation = rotation;
+  }
+    
+  draw() {
+    // ctx.save();
+    // ctx.translate(this.x, this.y);
+    // ctx.rotate((this.rotation * Math.PI) / 180);
+    // ctx.translate(-this.x, -this.y);
+    //
+    // ctx.beginPath();
+    // ctx.fillStyle = "white";
+    // ctx.fillRect(this.x, this.y, 4, 4);
+    // ctx.restore();
+  }
+   
 }
 
 
 class Game {
   constructor(starsCount, ) {
     this.stars = [];
+    this.asteroids = [];
     this.ship = new SpaceShip(width / 2, height / 2, 0);
 
     // NOTE
@@ -89,13 +135,19 @@ class Game {
       this.stars[i] = new Star(randomInt(0, width), randomInt(0, height));
     }
 
+    for (var i = 0; i < asteroidsCount; ++i) {
+      this.asteroids[i] = new Asteroid(randomInt(0, width), randomInt(0, height), randomInt(0, 360)); 
+    }
+
     document.addEventListener("keydown", (event) => { 
       switch (event.key) {
-        case "ArrowUp": this.ship.setAccel(0.05);
+        case "ArrowUp": this.ship.setAccel(0.08);
           break;
-        case "ArrowRight": this.ship.setRotation(5);
+        case "ArrowRight": this.ship.setRotation(10);
           break;
-        case "ArrowLeft": this.ship.setRotation(-5);
+        case "ArrowLeft": this.ship.setRotation(-10);
+          break;
+        case "Space": this.ship.shoot();
           break;
       }
     });
@@ -111,6 +163,10 @@ class Game {
     for (const star of this.stars) {
       star.draw();
     }
+    for (const asteroid of this.asteroids) {
+      asteroid.draw();
+    }
+    this.ship.updatePosition();
     this.ship.draw();
   }
 }
