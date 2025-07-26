@@ -8,7 +8,7 @@ const maxVel = 8;
 
 // Refactor this
 const starsCount = 50;
-const asteroidsCount = 2;
+const asteroidsCount = 3;
 
 function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -29,15 +29,61 @@ class Star {
   }
 }
 
+class Bullet {
+  constructor(x, y, d, accel) {
+    this.ox = x;
+    this.oy = y;
+
+    this.x = x;
+    this.y = y;
+    this.rotation = d;
+    this.distance = 0;
+    this.accel = accel;
+
+    this.vel = {x: 0, y: 0};
+    this.a = {x: 0, y: 0};
+
+    this.a.x = Math.sin(this.rotation * Math.PI / 180);
+    this.a.y = Math.cos(this.rotation * Math.PI / 180);
+
+    // Update Velcoity
+    this.vel.x = (this.accel * this.a.x);
+    this.vel.y = -(this.accel * this.a.y);
+  }
+
+  updatePosition() {
+    this.x = (this.x + this.vel.x + width) % width;
+    this.y = (this.y + this.vel.y + height) % height;
+
+    const dx = this.x - this.ox;
+    const dy = this.y - this.oy;
+
+    this.distance = Math.sqrt(dx * dx + dy * dy); 
+  }
+  
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate((this.rotation * Math.PI) / 180);
+    ctx.translate(-this.x, -(this.y));
+
+    ctx.fillStyle = "white";
+    ctx.fillRect(this.x, this.y, 3, 3);
+    ctx.restore();
+  }
+   
+}
+
 class SpaceShip {
   // TODO 
-  constructor(x, y, rotation) {
+  constructor(x, y, rotation, size) {
     // velicoty vector
     this.vel = {x: 0, y:0};
     this.pos = {x: x, y: y};
     this.rotation = rotation;
     this.accel = 0;   
     this.a = {x: 0, y: 0};
+    this.size = size;
   }
 
   setAccel(accel) {
@@ -49,10 +95,19 @@ class SpaceShip {
 
     // Update Velcoity
     this.vel.x += (this.accel * this.a.x);
-    this.vel.y += (this.accel * this.a.y);
+    this.vel.y -= (this.accel * this.a.y);
 
     this.vel.x = Math.min(maxVel, this.vel.x);
-    this.vel.y = Math.min(maxVel, this.vel.y);
+
+    // Refactor this
+    if (this.vel.y < 0) {
+      this.vel.y = Math.max(-maxVel, this.vel.y);
+    }
+    else {
+      this.vel.y = Math.min(maxVel, this.vel.y);
+    }
+
+    console.log(this.vel.x, this.vel.y);
   }
 
   clearAccel() {
@@ -65,8 +120,8 @@ class SpaceShip {
 
   updatePosition() {
     // Update Position
-    this.pos.x += this.vel.x; 
-    this.pos.y -= this.vel.y;
+    this.pos.x = (this.pos.x + this.vel.x) % width; 
+    this.pos.y = (this.pos.y + this.vel.y) % height;
   }
 
   draw() {
@@ -80,14 +135,15 @@ class SpaceShip {
     this.pos.x = (this.pos.x + canvas.width) % canvas.width;
     this.pos.y = (this.pos.y + canvas.height) % canvas.height;
 
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = 2;
+    ctx.fillStyle = "black";
+
     ctx.moveTo(this.pos.x, this.pos.y - 16);
     ctx.lineTo(this.pos.x - 8, this.pos.y + 8);
     ctx.lineTo(this.pos.x + 8, this.pos.y + 8);
     ctx.lineTo(this.pos.x, this.pos.y - 16);
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
     ctx.stroke(); 
-    ctx.fillStyle = "black";
     ctx.fill();
     ctx.closePath();
 
@@ -95,30 +151,50 @@ class SpaceShip {
   }
 
   shoot() {
-    // TODO
-    // Shoot using the current rotation distance should be the width
-    // Create a new class for Bullets
+    // change bullet speed;
+    const bullet = new Bullet(this.pos.x, this.pos.y, this.rotation, 2);
+    return bullet;
   }
+
 }
 
 class Asteroid {
   // TODO
-  constructor(x, y, rotation) {
+  constructor(x, y, rotation, accel, size) {
     this.x = x;  
     this.y = y;  
+    this.accel = accel;
+    this.vel = {x: 0, y: 0};
+    this.a = {x: 0, y: 0};
     this.rotation = rotation;
+    this.size = size;
+
+    this.a.x = Math.sin(this.rotation * Math.PI / 180);
+    this.a.y = Math.cos(this.rotation * Math.PI / 180);
+
+    // Update Velcoity
+    this.vel.x = (this.accel * this.a.x);
+    this.vel.y = (this.accel * this.a.y);
+  }
+
+  updatePosition() {
+    this.x = (this.x + this.vel.x + width) % width;
+    this.y = (this.y + this.vel.y + height) % height;
   }
     
   draw() {
-    // ctx.save();
-    // ctx.translate(this.x, this.y);
-    // ctx.rotate((this.rotation * Math.PI) / 180);
-    // ctx.translate(-this.x, -this.y);
-    //
-    // ctx.beginPath();
-    // ctx.fillStyle = "white";
-    // ctx.fillRect(this.x, this.y, 4, 4);
-    // ctx.restore();
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate((this.rotation * Math.PI) / 180);
+    ctx.translate(-this.x, -this.y);
+
+    ctx.strokeStyle = "white";
+    ctx.lineWidth = this.size / 40;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, 2 * Math.PI);
+    ctx.stroke();
+    ctx.closePath();
+    ctx.restore();
   }
    
 }
@@ -127,8 +203,10 @@ class Asteroid {
 class Game {
   constructor(starsCount, ) {
     this.stars = [];
-    this.asteroids = [];
-    this.ship = new SpaceShip(width / 2, height / 2, 0);
+    this.asteroids = new Set();
+    this.ship = new SpaceShip(width / 2, height / 2, 0, 10);
+    this.end = false;
+    this.bullets = new Set();
 
     // NOTE
     for (var i = 0; i < starsCount; ++i) {
@@ -136,7 +214,7 @@ class Game {
     }
 
     for (var i = 0; i < asteroidsCount; ++i) {
-      this.asteroids[i] = new Asteroid(randomInt(0, width), randomInt(0, height), randomInt(0, 360)); 
+      this.asteroids.add(new Asteroid(randomInt(0, width), randomInt(0, height), randomInt(0, 360), random(0.08, 1), 50)); 
     }
 
     document.addEventListener("keydown", (event) => { 
@@ -147,7 +225,8 @@ class Game {
           break;
         case "ArrowLeft": this.ship.setRotation(-10);
           break;
-        case "Space": this.ship.shoot();
+        case " ": this.bullets.add(this.ship.shoot());
+          console.log(this.bullets);
           break;
       }
     });
@@ -164,19 +243,74 @@ class Game {
       star.draw();
     }
     for (const asteroid of this.asteroids) {
+      asteroid.updatePosition();
       asteroid.draw();
+    }
+    for (const bullet of this.bullets) {
+      console.log(bullet);
+      bullet.updatePosition();
+      bullet.draw();
     }
     this.ship.updatePosition();
     this.ship.draw();
   }
+
+  // Between ship and asteroids
+  collisionDetect() {
+    // check if ship is colliding with asteroids
+    for (const asteroid of this.asteroids) {
+
+      const dx = this.ship.pos.x - asteroid.x;
+      const dy = this.ship.pos.y - asteroid.y;
+
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      if (distance < this.ship.size + asteroid.size) {
+        this.end = true;
+      }
+    }
+
+    for (const bullet of this.bullets) {
+      for (const asteroid of this.asteroids) {
+        const dx = bullet.x - asteroid.x;
+        const dy = bullet.y - asteroid.y;
+
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < asteroid.size) {
+          this.bullets.delete(bullet);
+          const x = asteroid.x;
+          const y = asteroid.y;
+          const size = asteroid.size;
+          this.asteroids.delete(asteroid);
+
+          if (size > 12.5) {
+            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(0.08, 1), size / 2)); 
+            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(0.08, 1), size / 2)); 
+          }
+        }
+      }
+    } 
+  } 
+
+  removeBullets() {
+    for (const bullet of this.bullets) {
+      // Change this distance 
+      if (bullet.distance > 300) {
+        this.bullets.delete(bullet);
+      }
+    }
+  } 
 }
 
 const loop = () => {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   game.draw();
+  game.collisionDetect();
+  game.removeBullets();
 
-  requestAnimationFrame(loop);
+  if (game.end === false) {
+    requestAnimationFrame(loop);
+  }
 };
 
 const game = new Game(starsCount);
