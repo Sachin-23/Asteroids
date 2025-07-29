@@ -4,7 +4,7 @@ const ctx = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
 
-const maxVel = 8;
+const maxAccel = 0.05;
 
 // Refactor this
 const starsCount = 50;
@@ -79,6 +79,7 @@ class SpaceShip {
   constructor(x, y, rotation, size) {
     // velicoty vector
     this.vel = {x: 0, y:0};
+    this.friction = 0.01;
     this.pos = {x: x, y: y};
     this.rotation = rotation;
     this.accel = 0;   
@@ -87,7 +88,7 @@ class SpaceShip {
   }
 
   setAccel(accel) {
-    this.accel += accel;   
+    this.accel =  Math.min(maxAccel, this.accel + accel);   
 
     // Radians
     this.a.x = Math.sin(this.rotation * Math.PI / 180);
@@ -96,15 +97,13 @@ class SpaceShip {
     // Update Velcoity
     this.vel.x += (this.accel * this.a.x);
     this.vel.y -= (this.accel * this.a.y);
+  }
 
-    this.vel.x = Math.min(maxVel, this.vel.x);
-
-    // Refactor this
-    if (this.vel.y < 0) {
-      this.vel.y = Math.max(-maxVel, this.vel.y);
-    }
-    else {
-      this.vel.y = Math.min(maxVel, this.vel.y);
+  setVel() {
+    var velMag = Math.sqrt(this.vel.x * this.vel.x + this.vel.y * this.vel.y);
+    if (velMag > 0.0) {
+      this.vel.x -= this.friction * this.vel.x / velMag;
+      this.vel.y -= this.friction * this.vel.y / velMag;
     }
 
     console.log(this.vel.x, this.vel.y);
@@ -207,6 +206,9 @@ class Game {
     this.ship = new SpaceShip(width / 2, height / 2, 0, 10);
     this.end = false;
     this.bullets = new Set();
+    this.accelOn = false;
+    this.rotateLeft = false;
+    this.rotateRight = false;
 
     // NOTE
     for (var i = 0; i < starsCount; ++i) {
@@ -219,11 +221,11 @@ class Game {
 
     document.addEventListener("keydown", (event) => { 
       switch (event.key) {
-        case "ArrowUp": this.ship.setAccel(0.08);
+        case "ArrowUp": this.accelOn = true;
           break;
-        case "ArrowRight": this.ship.setRotation(10);
+        case "ArrowRight": this.rotateRight = true;
           break;
-        case "ArrowLeft": this.ship.setRotation(-10);
+        case "ArrowLeft": this.rotateLeft = true;
           break;
         case " ": this.bullets.add(this.ship.shoot());
           console.log(this.bullets);
@@ -233,7 +235,12 @@ class Game {
 
     document.addEventListener("keyup", (event) => { 
       switch (event.key) {
-        case "ArrowUp": this.ship.clearAccel();
+        case "ArrowUp": this.accelOn = false;
+          break;
+        case "ArrowRight": this.rotateRight = false;
+          break;
+        case "ArrowLeft": this.rotateLeft = false;
+          break;
       }
     });
   }
@@ -251,6 +258,23 @@ class Game {
       bullet.updatePosition();
       bullet.draw();
     }
+
+    if (this.accelOn) {
+      this.ship.setAccel(0.004);
+    } else {
+      this.ship.clearAccel();
+    }
+
+    if (this.rotateLeft) {
+      this.ship.setRotation(-4);
+    }
+
+    if (this.rotateRight) {
+      this.ship.setRotation(4);
+    }
+
+    this.ship.setVel();
+
     this.ship.updatePosition();
     this.ship.draw();
   }
