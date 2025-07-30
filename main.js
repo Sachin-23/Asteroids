@@ -3,10 +3,10 @@ const Config = {
   starsCount: 50,
   asteroidsCount: 3,
   accel: 30,
-  rotation: 15,
+  rotation: 12,
   maxAccel: 15,
-  bulletMaxDistance: 1250,
-  ship: { size: 10, friction: 0.01 },
+  bulletMaxDistance: 500,
+  ship: { size: 10, friction: 0.01, maxVelocity: 100 },
   asteroid: { initialSize: 50, minSize: 12.5, speedRange: [0.08, 1] }
 }
 
@@ -16,7 +16,7 @@ const randomInt = (min, max) => {
 }
 
 const random = (min, max) => {
-    return Math.random() * (max - min + 1) + min;
+    return Math.random() * (max - min) + min;
 }
 
 class Vector2 {
@@ -105,7 +105,6 @@ class Asteroid {
 
 class Bullet {
   constructor(position, rotation) {
-    this.origin = position.copy();
     this.pos = position.copy();
     this.direction = Vector2.fromAngle(rotation);
     this.velocity = this.direction.scale(Config.maxAccel * 40);
@@ -116,9 +115,8 @@ class Bullet {
     this.pos.x += this.velocity.x * dt;
     this.pos.y -= this.velocity.y * dt;
 
-    this.distanceTraveled += this.pos.add(this.origin.scale(-1)).magnitude();
-
-    this.origin = this.pos.copy();
+    const delta = this.velocity.scale(dt).magnitude();
+    this.distanceTraveled += delta;
 
     this.pos.x = (this.pos.x + canvas.width) % canvas.width;
     this.pos.y = (this.pos.y + canvas.height) % canvas.height;
@@ -143,6 +141,7 @@ class SpaceShip {
     this.pos = new Vector2(x, y);
     this.rotation = rotation;
     this.size = Config.ship.size;;
+    this.maxVel = Config.ship.maxVelocity;
   }
 
   setRotation(deg) {
@@ -155,8 +154,10 @@ class SpaceShip {
     this.vel.x += accel * a.x;
     this.vel.y -= accel * a.y;
     
-    this.vel.x = Math.max(-200, Math.min(this.vel.x, 200)); 
-    this.vel.y = Math.max(-200, Math.min(this.vel.y, 200)); 
+    const mag = this.vel.magnitude();
+    if (mag > this.maxVel) {
+      this.vel = this.vel.normalize().scale(this.maxVel);
+    }
   }
 
   clearAccel() {
@@ -214,6 +215,10 @@ class Game {
     this.rotateRight = false;
     this.rotateLeft = false;
 
+    this.accelOn = false;
+    this.rotateLeft = false;
+    this.rotateRight = false;
+
     this.bullets = new Set();
     this.asteroids = new Set(); 
 
@@ -229,29 +234,30 @@ class Game {
 
     this.ship = new SpaceShip(canvas.width / 2, canvas.height / 2, 0, Config);
 
-    document.addEventListener("keydown", (event) => {
-      switch (event.key) {
-        case "ArrowUp": this.ship.setAccel(Config.accel);
-          break;
-        case "ArrowLeft": this.ship.setRotation(-Config.rotation);
-          break;
-        case "ArrowRight": this.ship.setRotation(Config.rotation);
-          break;
-        case " ": this.bullets.add(this.ship.shoot());
-          break;
+    document.addEventListener("keydown", (e) => {
+      switch (e.key) {
+        case "ArrowUp": this.accelOn = true; break;
+        case "ArrowLeft": this.rotateLeft = true; break;
+        case "ArrowRight": this.rotateRight = true; break;
+        case " ": this.bullets.add(this.ship.shoot()); break;
       }
     });
 
-    document.addEventListener("keyUp", (event) => {
-      switch (event.key) {
-        case "ArrowUp": this.ship.clearAccel();
-          break;
+    document.addEventListener("keyup", (e) => {
+      switch (e.key) {
+        case "ArrowUp": this.accelOn = false; break;
+        case "ArrowLeft": this.rotateLeft = false; break;
+        case "ArrowRight": this.rotateRight = false; break;
       }
     });
+
   }
 
+  // In handleInput()
   handleInput() {
-    // TODO
+    if (this.accelOn) this.ship.setAccel(this.config.accel);
+    if (this.rotateLeft) this.ship.setRotation(-this.config.rotation);
+    if (this.rotateRight) this.ship.setRotation(this.config.rotation);
   }
 
   cleanupEntities() {
