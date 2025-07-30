@@ -4,9 +4,11 @@ Asteriod JS
 + [x] How to handle the ship
 + [x] Handle Rotation
 + [x] Use Class Based
-+ [ ] Obstacles and Ship Collision Detection
-+ [ ] Bullets (How far it should go ? )
-+ [ ] Obstacle -> Breakdown
++ [x] Obstacles and Ship Collision Detection
++ [x] Bullets (How far it should go ? )
++ [x] Obstacle -> Breakdown
++ [ ] Cool Effects
++ [ ] Fine tune Accel, MaxVelocity and etc
 + [ ] Finishing -> Score, Levels, and ? 
 
 Asteriod 3D or multiplayer
