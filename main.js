@@ -2,11 +2,11 @@
 const Config = {
   starsCount: 50,
   asteroidsCount: 3,
-  accel: 30,
-  rotation: 12,
-  maxAccel: 15,
+  accel: 15,
+  rotation: 8,
+  maxAccel: 10,
   bulletMaxDistance: 500,
-  ship: { size: 10, friction: 0.01, maxVelocity: 100 },
+  ship: { size: 12, maxVelocity: 200 },
   asteroid: { initialSize: 50, minSize: 12.5, speedRange: [0.08, 1] }
 }
 
@@ -15,7 +15,7 @@ const randomInt = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-const random = (min, max) => {
+const random = ([min, max]) => {
     return Math.random() * (max - min) + min;
 }
 
@@ -42,7 +42,7 @@ class Vector2 {
   }
 
   normalize() {
-    const m = this.magnitude() || 1; // why this ? 
+    const m = this.magnitude() || 1;
     return new Vector2(this.x / m, this.y / m);
   }
 
@@ -108,18 +108,18 @@ class Bullet {
     this.pos = position.copy();
     this.direction = Vector2.fromAngle(rotation);
     this.velocity = this.direction.scale(Config.maxAccel * 40);
+    this.velocity.y *= -1; // Origin is the top-left corner
     this.distanceTraveled = 0;
   }
 
   update(dt, canvas) {
-    this.pos.x += this.velocity.x * dt;
-    this.pos.y -= this.velocity.y * dt;
+    this.pos = this.pos.add(this.velocity.scale(dt));
 
     const delta = this.velocity.scale(dt).magnitude();
     this.distanceTraveled += delta;
 
-    this.pos.x = (this.pos.x + canvas.width) % canvas.width;
-    this.pos.y = (this.pos.y + canvas.height) % canvas.height;
+    this.pos.x = wrap(this.pos.x, canvas.width);
+    this.pos.y = wrap(this.pos.y, canvas.height);
   }
 
   draw(ctx) {
@@ -146,15 +146,14 @@ class SpaceShip {
 
   setRotation(deg) {
     this.rotation += deg;
+    this.rotation = wrap(this.rotation, 360);
   }
 
   setAccel(accel) {
-    const a = Vector2.fromAngle(this.rotation);
-
-    this.vel.x += accel * a.x;
-    this.vel.y -= accel * a.y;
+    this.vel = this.vel.add(Vector2.fromAngle(this.rotation).scale(accel));
     
     const mag = this.vel.magnitude();
+
     if (mag > this.maxVel) {
       this.vel = this.vel.normalize().scale(this.maxVel);
     }
@@ -166,7 +165,7 @@ class SpaceShip {
 
   update(dt, canvas) {
     this.pos.x += this.vel.x * dt;
-    this.pos.y += this.vel.y * dt;
+    this.pos.y -= this.vel.y * dt;
 
     this.pos.x = (this.pos.x + canvas.width) % canvas.width;
     this.pos.y = (this.pos.y + canvas.height) % canvas.height;
@@ -174,9 +173,9 @@ class SpaceShip {
 
   draw(canvas, ctx) {
     ctx.save();
-    ctx.translate(this.pos.x, this.pos.y);
+    ctx.translate(this.pos.x, this.pos.y + 10);
     ctx.rotate((this.rotation * Math.PI) / 180);
-    ctx.translate(-this.pos.x, -(this.pos.y));
+    ctx.translate(-this.pos.x, -(this.pos.y + 10));
 
     ctx.beginPath();
 
@@ -184,10 +183,16 @@ class SpaceShip {
     ctx.lineWidth = 2;
     ctx.fillStyle = "black";
 
-    ctx.moveTo(this.pos.x, this.pos.y - 16);
-    ctx.lineTo(this.pos.x - 8, this.pos.y + 8);
-    ctx.lineTo(this.pos.x + 8, this.pos.y + 8);
-    ctx.lineTo(this.pos.x, this.pos.y - 16);
+    // ctx.moveTo(this.pos.x, this.pos.y - 16);
+    // ctx.lineTo(this.pos.x - 8, this.pos.y + 8);
+    // ctx.lineTo(this.pos.x + 8, this.pos.y + 8);
+    // ctx.lineTo(this.pos.x, this.pos.y - 16);
+
+    ctx.moveTo(this.pos.x, this.pos.y);
+    ctx.lineTo(this.pos.x - 8, this.pos.y + 16);
+    ctx.lineTo(this.pos.x + 8, this.pos.y + 16);
+    ctx.lineTo(this.pos.x, this.pos.y);
+
     ctx.stroke(); 
     ctx.fill();
     ctx.closePath();
@@ -222,15 +227,22 @@ class Game {
     this.bullets = new Set();
     this.asteroids = new Set(); 
 
+    this.shootDown = false;
+    this.shootUp = true;
+
     for (var i = 0; i < this.config.starsCount; ++i) {
       this.stars[i] = new Star(randomInt(0, this.canvas.width), randomInt(0, this.canvas.height));
     }
 
     for (var i = 0; i < this.config.asteroidsCount; ++i) {
-      this.asteroids.add(new Asteroid(randomInt(0, canvas.width), randomInt(0, canvas.height), randomInt(0, 360), random(0.08, 1), 50)); 
-    }
 
-    console.log(this.asteroids);
+      let x = 0, y = 0;
+      while (x > 300 && x < 500 || 300 > y && y < 500) {
+        x = randomInt(0, canvas.width);
+        y = randomInt(0, canvas.height);
+      }
+      this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(Config.asteroid.speedRange), 50)); 
+    }
 
     this.ship = new SpaceShip(canvas.width / 2, canvas.height / 2, 0, Config);
 
@@ -239,7 +251,12 @@ class Game {
         case "ArrowUp": this.accelOn = true; break;
         case "ArrowLeft": this.rotateLeft = true; break;
         case "ArrowRight": this.rotateRight = true; break;
-        case " ": this.bullets.add(this.ship.shoot()); break;
+        case " ": 
+          if (this.shootUp) {
+            this.shootDown = true;
+            this.shootUp = false;
+          }
+         break;
       }
     });
 
@@ -248,6 +265,7 @@ class Game {
         case "ArrowUp": this.accelOn = false; break;
         case "ArrowLeft": this.rotateLeft = false; break;
         case "ArrowRight": this.rotateRight = false; break;
+        case " ": this.shootUp = true; break;
       }
     });
 
@@ -258,12 +276,15 @@ class Game {
     if (this.accelOn) this.ship.setAccel(this.config.accel);
     if (this.rotateLeft) this.ship.setRotation(-this.config.rotation);
     if (this.rotateRight) this.ship.setRotation(this.config.rotation);
+    if (this.shootDown) {
+      this.shootDown = false;
+      this.bullets.add(this.ship.shoot());
+    }
   }
 
   cleanupEntities() {
     this.bullets.forEach(b => {
-      if (b.isExpired())
-        this.bullets.delete(b);
+      if (b.isExpired()) this.bullets.delete(b)
     });
   }
 
@@ -291,9 +312,9 @@ class Game {
 
           this.asteroids.delete(asteroid);
 
-          if (size > 12.5) {
-            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(0.08, 1), size / 2)); 
-            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(0.08, 1), size / 2)); 
+          if (size > Config.asteroid.minSize) {
+            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(Config.asteroid.speedRange), size / 2)); 
+            this.asteroids.add(new Asteroid(x, y, randomInt(0, 360), random(Config.asteroid.speedRange), size / 2)); 
           }
         }
       }
