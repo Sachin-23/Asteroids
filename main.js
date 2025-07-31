@@ -2,9 +2,9 @@
 const Config = {
   starsCount: 50,
   asteroidsCount: 3,
-  accel: 15,
-  rotation: 8,
-  maxAccel: 10,
+  accel: 500,
+  rotation: 500,
+  maxAccel: 400,
   bulletMaxDistance: 500,
   ship: { size: 12, maxVelocity: 200 },
   asteroid: { initialSize: 50, minSize: 12.5, speedRange: [0.08, 1] }
@@ -107,7 +107,7 @@ class Bullet {
   constructor(position, rotation) {
     this.pos = position.copy();
     this.direction = Vector2.fromAngle(rotation);
-    this.velocity = this.direction.scale(Config.maxAccel * 40);
+    this.velocity = this.direction.scale(Config.maxAccel);
     this.velocity.y *= -1; // Origin is the top-left corner
     this.distanceTraveled = 0;
   }
@@ -272,10 +272,10 @@ class Game {
   }
 
   // In handleInput()
-  handleInput() {
-    if (this.accelOn) this.ship.setAccel(this.config.accel);
-    if (this.rotateLeft) this.ship.setRotation(-this.config.rotation);
-    if (this.rotateRight) this.ship.setRotation(this.config.rotation);
+  handleInput(dt) {
+    if (this.accelOn) this.ship.setAccel(this.config.accel * dt);
+    if (this.rotateLeft) this.ship.setRotation(-this.config.rotation * dt);
+    if (this.rotateRight) this.ship.setRotation(this.config.rotation * dt);
     if (this.shootDown) {
       this.shootDown = false;
       this.bullets.add(this.ship.shoot());
@@ -323,7 +323,7 @@ class Game {
   }
 
   update(dt) {
-    this.handleInput();
+    this.handleInput(dt);
     this.ship.update(dt, this.canvas);
     this.bullets.forEach(b => b.update(dt, this.canvas));
     this.asteroids.forEach(a => a.update(dt, this.canvas));
